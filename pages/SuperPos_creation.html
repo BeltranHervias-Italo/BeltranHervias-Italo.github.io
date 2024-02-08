@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate SuperPos.users</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            transition: background-color 0.5s;
+        }
+        h2 {
+            color: #333;
+        }
+        form {
+            max-width: 1300px;
+            margin: auto;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #333;
+        }
+        textarea, input {
+            width: 50%;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        button {
+            padding: 8px 15px;
+            margin-bottom: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #output {
+            width: 50%;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .copy-success {
+            color: green;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Generate SuperPos.users </h2>
+
+    <form id="curlForm">
+        <label for="clipboard">Serie Numbers</label>
+        <textarea id="clipboard" placeholder="Click on Paste" name="clipboard" rows="4"></textarea>
+        <br><button type="button" onclick="pasteFromClipboard()">Paste</button>
+        <button type="button" onclick="refreshForm()">Refresh</button>
+
+        <label for="email">E-mail</label>
+        <input type="text" id="email" name="email" required>
+
+        <label for="phone">Phone Number</label>
+        <input type="text" id="phone" name="phone" required>
+
+        
+        
+
+        <label for="output">Result:</label>
+        <textarea id="output" name="output" rows="10" readonly></textarea>
+        
+        <br><button type="button" onclick="generateCurlCommands()">Generate Query</button>
+        <button type="button" onclick="copyToClipboard()">Copy Result</button>
+        <span id="copyStatus" class="copy-success"></span>
+    </form>
+
+    <script>
+        function pasteFromClipboard() {
+            navigator.clipboard.readText().then(function (clipboardData) {
+                document.getElementById('clipboard').value = clipboardData;
+            });
+        }
+
+        function generateCurlCommands() {
+            var email = document.getElementById('email').value.trim();
+            var phone = document.getElementById('phone').value.replace(/\s/g, '');
+            var clipboardData = document.getElementById('clipboard').value;
+
+            // Dividir las series por saltos de línea
+            var series = clipboardData.split('\n');
+
+            var output = document.getElementById('output');
+            output.value = ''; // Limpiar el contenido actual
+
+            // Generar un comando cURL por cada serie
+            series.forEach(function(serie) {
+                // Eliminar espacios en blanco de la serie
+                serie = serie.replace(/\s/g, '');
+
+                var curlCommand = `
+                curl --location --request POST 'http://localhost:3000/superpos/internal/v1/create-user' \\
+                --header 'Content-Type: application/json' \\
+                --data-raw '{
+                    "meta": {
+                        "serviceId": "se-express",
+                        "timestamp": "2020-01-31T12:01:34.315Z-0500",
+                        "request": {
+                            "traceId": "req-4eb428cf-938e-4992-b1c0-400a8d69f775",
+                            "ipAddress": "192.168.143.2",
+                            "userId": "5e345c0861ef02001369f94e"
+                        },
+                        "originId": "or-onboarding",
+                        "sessionId": "n47dJnZDMGbunkuKxMLJl"
+                    },
+                    "data": {
+                        "users": [
+                            {
+                                "email": "${email}",
+                                "serie": "${serie}",
+                                "phoneNumber": "${phone}"
+                            }
+                        ]
+                    }
+                }'
+                `;
+
+                output.value += curlCommand + '\n\n';
+            });
+        }
+
+        function refreshForm() {
+            document.getElementById('clipboard').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('phone').value = '';
+            document.getElementById('output').value = '';
+            document.getElementById('copyStatus').innerText = '';
+        }
+
+        function copyToClipboard() {
+            var output = document.getElementById('output');
+            output.select();
+            document.execCommand('copy');
+            document.getElementById('copyStatus').innerText = '✓ Copiado';
+            setTimeout(() => {
+                document.getElementById('copyStatus').innerText = '';
+            }, 2000);
+        }
+    </script>
+
+</body>
+</html>

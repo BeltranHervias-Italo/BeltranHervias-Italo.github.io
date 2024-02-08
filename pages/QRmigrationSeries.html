@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <title>Object Generator in QR-Migration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            transition: background-color 0.5s;
+        }
+        h1 {
+            color: #333;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 15px;
+            margin-bottom: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .copy-success {
+            color: green;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Object Generator in QR-Migration</h1>
+    <input type="file" id="fileInput" accept=".xlsx, .xls" onchange="handleFile()">
+    <div id="result"></div>
+    
+    <button onclick="copyToClipboard()">Copy Result</button>
+    <span id="copyStatus" class="copy-success"></span>
+    <button onclick="refreshResults()">Refresh</button>
+
+    <script>
+        function handleFile() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('result');
+
+            const file = fileInput.files[0];
+            if (!file) {
+                resultDiv.innerText = 'Select a valid file.';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+                const rows = XLSX.utils.sheet_to_json(sheet);
+
+                resultDiv.innerHTML = generateObjects(rows);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function generateObject({ serie, id_terminal }) {
+            return `{
+                "serie": "${serie}",
+                "idTerminalV2": "${id_terminal}"
+            }`;
+        }
+
+        function generateObjects(data) {
+            const objects = data.map(generateObject).join(',');
+            return `{
+                "terminals": [
+                    ${objects}
+                ]
+            }`;
+        }
+
+        function copyToClipboard() {
+            const resultDiv = document.getElementById('result');
+            const textArea = document.createElement('textarea');
+            textArea.value = resultDiv.innerHTML;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            const copyStatus = document.getElementById('copyStatus');
+            copyStatus.innerText = '✓ Copiado';
+            setTimeout(() => {
+                copyStatus.innerText = '';
+            }, 2000);
+
+            //alert('Resultado copiado al portapapeles.');
+        }
+
+        function refreshResults() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = ''; // Limpiar resultados
+            const copyStatus = document.getElementById('copyStatus');
+            copyStatus.innerText = '';
+        }
+    </script>
+</body>
+</html>

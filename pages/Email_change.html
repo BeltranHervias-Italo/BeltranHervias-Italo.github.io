@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Actualización</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            transition: background-color 0.5s;
+        }
+        h1 {
+            color: #007BFF;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input {
+            width: 30%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 15px;
+            margin-bottom: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        h2 {
+            color: #007BFF;
+            margin-top: 20px;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .output-container {
+            margin-bottom: 20px;
+        }
+        .copy-success {
+            color: green;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Email Change</h1>
+    
+    <label for="emailAntiguo">Old Email:</label>
+    <input type="text" id="emailAntiguo" placeholder="Enter Old Email">
+
+    <label for="emailNuevo">New Email:</label>
+    <input type="text" id="emailNuevo" placeholder="Enter New Email">
+    <br>
+    <button onclick="generarConsultas()">Generate Queries</button>
+    <button onclick="refreshForm()">Refresh</button>
+
+    <h2>Result:</h2>
+
+    <div class="output-container" id="output1">
+        <pre></pre>
+        <button onclick="copiarTexto('output1', 'copyStatus1')">Copy Result</button>
+        <span id="copyStatus1" class="copy-success"></span>
+    </div>
+
+    <div class="output-container" id="output2">
+        <pre></pre>
+        <button onclick="copiarTexto('output2', 'copyStatus2')">Copy Result</button>
+        <span id="copyStatus2" class="copy-success"></span>
+    </div>
+
+    <div class="output-container" id="output3">
+        <pre></pre>
+        <button onclick="copiarTexto('output3', 'copyStatus3')">Copy Result</button>
+        <span id="copyStatus3" class="copy-success"></span>
+    </div>
+
+    <div class="output-container" id="output4">
+        <pre></pre>
+        <button onclick="copiarTexto('output4', 'copyStatus4')">Copy Result</button>
+        <span id="copyStatus4" class="copy-success"></span>
+    </div>
+
+    <script>
+        function generarConsultas() {
+            var emailAntiguo = document.getElementById('emailAntiguo').value;
+            var emailNuevo = document.getElementById('emailNuevo').value;
+
+            emailAntiguo = emailAntiguo.replace(/\s/g, '');
+            emailNuevo = emailNuevo.replace(/\s/g, '');
+
+            document.getElementById('output1').querySelector('pre').innerText = 
+            `db.users.update({
+            "email":"${emailAntiguo}"},
+            {$set:{"email":"${emailNuevo}"}}, 
+            { multi: true, upsert: false})`;
+
+            document.getElementById('output2').querySelector('pre').innerText = 
+            `db.accounts.update({
+            "owner.email":"${emailAntiguo}"}, 
+            {$set:{"owner.email":"${emailNuevo}"}}, 
+            { multi: true, upsert: false})`;
+
+            document.getElementById('output3').querySelector('pre').innerText = 
+            `db.merchants.update({
+            "owner.email":"${emailAntiguo}"}, 
+            {$set:{"owner.email":"${emailNuevo}"}}, 
+            { multi: true, upsert: false})`;
+
+            document.getElementById('output4').querySelector('pre').innerText = 
+            `db.users.update({
+            "email":"${emailAntiguo}"}, 
+            {$set:{"email":"${emailNuevo}"}}, 
+            { multi: true, upsert: false})`;
+        }
+
+        function copiarTexto(id, copyStatusId) {
+            var texto = document.getElementById(id).querySelector('pre').innerText;
+            var textarea = document.createElement('textarea');
+            textarea.value = texto;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            document.getElementById(copyStatusId).innerText = '✓ Copiado';
+            setTimeout(() => {
+                document.getElementById(copyStatusId).innerText = '';
+            }, 2000);
+        }
+
+        function refreshForm() {
+            document.getElementById('emailAntiguo').value = '';
+            document.getElementById('emailNuevo').value = '';
+
+            document.getElementById('output1').querySelector('pre').innerText = '';
+            document.getElementById('output2').querySelector('pre').innerText = '';
+            document.getElementById('output3').querySelector('pre').innerText = '';
+            document.getElementById('output4').querySelector('pre').innerText = '';
+        }
+    </script>
+</body>
+</html>

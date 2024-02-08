@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions.errors cURL Generate</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;   
+            transition: background-color 0.5s;
+        }
+        h1 {
+            color: #333;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            color: #333;
+        }
+        textarea {
+            width: 30%;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        button {
+            padding: 8px 15px;
+            margin-bottom: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #resultado {
+            width: 80%;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .copy-success {
+            color: green;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Transactions.errors cURL Generate</h1>
+    
+    <label for="inputValor">Enter Values</label>
+    <textarea id="inputValor" placeholder="Paste ObjectId from Transactions.errors"></textarea>
+
+    <br><button onclick="pegarDesdePortapapeles()">Paste </button>
+    <button onclick="generarCurl()">Generate cURL</button>
+
+    <br>
+    <textarea id="resultado" rows="10" cols="50" readonly></textarea>
+    <br><button onclick="copiarResultado()">Copy Result</button>
+    <span id="copyStatus" class="copy-success"></span>
+    <button onclick="refresh()">Refresh</button>
+
+
+    <script>
+        const inputValor = document.getElementById('inputValor');
+        const resultadoTextarea = document.getElementById('resultado');
+        const copyStatus = document.getElementById('copyStatus');
+        
+        function pegarDesdePortapapeles() {
+            navigator.clipboard.readText().then(text => {
+                inputValor.value = text;
+                console.log('Valores pegados desde el portapapeles:', text);
+            }).catch(err => {
+                console.error('No se pudo leer desde el portapapeles:', err);
+            });
+        }
+
+        function generarCurl() {
+            const valores = inputValor.value.trim().split('\n');
+
+            if (valores.length > 0) {
+                let curlCommands = '';
+
+                valores.forEach((valor, index) => {
+                    const trimmedValor = valor.trim();
+                    if (trimmedValor !== '') {
+                        const curlCommand = `curl -v POST http://localhost:3000/transactions/internal/retry/retry-single -H 'cache-control: no-cache' -H 'content-type: application/json' -d \'{"meta": {"sessionId": "AU2zEPVZ7AA9Uzw4AP3y-", "serviceId": "ms-transactions", "timestamp": "2019-09-15T11:13:20.123Z-0500", "request": {"traceId": "456", "ipAddress": "127.0.0.1", "userId": "134"}}, "data": {"errorId": "${trimmedValor}"}}\'`;
+
+                        curlCommands += curlCommand;
+
+                        if (index < valores.length - 1) {
+                            curlCommands += ' &';
+                        } else {
+                            curlCommands += ' wait';
+                        }
+
+                        curlCommands += '\n';
+                    }
+                });
+
+                resultadoTextarea.value = curlCommands;
+                console.log(curlCommands);
+            } else {
+                resultadoTextarea.value = 'No hay valores para generar Curl.';
+                console.log('No hay valores para generar Curl.');
+            }
+        }
+
+        function copiarResultado() {
+            resultadoTextarea.select();
+            document.execCommand('copy');
+
+            copyStatus.innerText = '✓ Copiado';
+            setTimeout(() => {
+                copyStatus.innerText = '';
+            }, 2000);
+
+            console.log('Resultado copiado al portapapeles.');
+        }
+
+        function refresh() {
+            inputValor.value = '';
+            resultadoTextarea.value = '';
+            copyStatus.innerText = '';
+            console.log('Valores reiniciados.');
+        }
+    </script>
+</body>
+</html>

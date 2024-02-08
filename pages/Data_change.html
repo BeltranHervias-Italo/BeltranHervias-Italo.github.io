@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serial Number Changes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            transition: background-color 0.5s;
+        }
+        h1 {
+            color: #007BFF; 
+        }
+        textarea {
+            width: 50%;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+        }
+        button {
+            padding: 8px 15px;
+            margin-bottom: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        h2 {
+            color: #007BFF;
+        }
+
+        .copy-success {
+            color: green;
+            margin-left: 10px;
+        }
+
+        /* Modo Oscuro */
+        body.dark-mode {
+            background-color: #333;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Serial Number Changes</h1>
+    <textarea id="serialNumbers" placeholder="Ingrese los números de serie, separados por saltos de línea"></textarea>
+    <br><button onclick="pasteAndCheck()">Paste and Check</button>
+
+    <button onclick="refreshData()">Refresh</button>
+
+    <h2>POSTMAN DATA</h2>
+    <textarea id="result1" readonly></textarea>
+    <br><button onclick="copyResultToClipboard('result1', 'copyStatus1')">Copy Result</button>
+    <div id="copyStatus1" class="copy-success"></div>
+
+    <h2>EVOLUTION DATA</h2>
+    <textarea id="result2" readonly></textarea>
+    <br><button onclick="copyResultToClipboard('result2', 'copyStatus2')">Copy Result</button>
+    <div id="copyStatus2" class="copy-success"></div>
+
+    <h2>TMS UPDATE DATA</h2>
+    <textarea id="result3" readonly></textarea>
+    <br><button onclick="copyResultToClipboard('result3', 'copyStatus3')">Copy Result</button>
+    <div id="copyStatus3" class="copy-success"></div>
+
+    <h2>CORE DATA DELETE</h2>
+    <textarea id="result4" readonly></textarea>
+    <br><button onclick="copyResultToClipboard('result4', 'copyStatus4')">Copy Result</button>
+    <div id="copyStatus4" class="copy-success"></div>
+
+    <h2>ACTIVAR PAGO RAPIDO</h2>
+    <textarea id="result5" readonly></textarea>
+    <br><button onclick="copyResultToClipboard('result5', 'copyStatus5')">Copy Result</button>
+    <div id="copyStatus5" class="copy-success"></div>
+
+    <h2>DESACTIVAR PAGO RAPIDO</h2>
+    <textarea id="result6" readonly></textarea>
+    <br><button onclick="copyResultToClipboard('result6', 'copyStatus6')">Copy Result</button>
+    <div id="copyStatus6" class="copy-success"></div>
+
+    <h2>EVOLUTION LIBERACION</h2>
+    <textarea id="result7" readonly></textarea>
+    <br><button onclick="copyResultToClipboard('result7', 'copyStatus7')">Copy Result</button>
+    <div id="copyStatus7" class="copy-success"></div>
+
+    <script>
+    
+        function checkSerialNumbers(serialNumbers) {
+            var serialNumbersArray = serialNumbers.split('\n').filter(Boolean);
+
+            var resultArray1 = serialNumbersArray.map(function(serialNumber, index) {
+                if (index === serialNumbersArray.length - 1) {
+                    return `{"auto_serialNumber":"${serialNumber.trim()}"}`;
+                } else {
+                    return `{"auto_serialNumber":"${serialNumber.trim()}"},`;
+                }
+            });
+
+            document.getElementById('result1').value = '[\n' + resultArray1.join('\n') + '\n]';
+
+            var resultArray2 = `"serie": {\n\t"$in": [\n\t\t${serialNumbersArray.map(num => `"${num.trim()}"`).join(',\n\t\t')}\n\t]\n}`;
+            document.getElementById('result2').value = resultArray2;
+
+            var resultArray3 = serialNumbersArray.map(num => num.trim()).join(',');
+            document.getElementById('result3').value = resultArray3;
+
+            var resultArray4 = serialNumbersArray.map(serialNumber => `CALL liberar_terminal_mPOS('${serialNumber.trim()}');`).join('\n');
+            document.getElementById('result4').value = resultArray4;
+
+            var resultArray5 = `curl --location --request POST 'http://localhost:3000/mpos-terminal/internal/config-terminal/assign' --header 'action: PATCH' --header 'Content-Type: application/json' --data-raw '{"meta":{"timestamp":"2020-05-14T17:27:07.042Z-0500","serviceId":"or-culqiapp","request":{"traceId":"req-9295c53d-f839-4667-99bb-ae75514f7f03","ipAddress":"192.168.49.253","userId":"5e29fd90c5ea0a3ea9f38e42"},"sessionId":"123456789"},"data":{"filters":{"series":[${serialNumbersArray.map(num => `"${num.trim()}"`).join(',')}]},"config":{"PAGO_RAPIDO":{"amountFastPaymentPEN":150,"amountFastPaymentUSD":50,"fastPaymentVisa":true,"fastPaymentMC":true,"fastPaymentAmex":false,"fastPaymentDiners":false},"BIN":"#bins.nationalBins"}}}'`;
+            document.getElementById('result5').value = resultArray5;
+
+            var resultArray6 = `curl --location --request POST 'http://localhost:3000/mpos-terminal/internal/config-terminal/assign' \\
+            --header 'Content-Type: application/json' \\
+            --header 'action: PATCH' \\
+            --data-raw '{
+                "meta":{
+                    "timestamp":"2023-06-14T03:30:00.042Z-0500",
+                    "serviceId":"ms-mpos-terminals",
+                    "request":{
+                        "traceId":"req-9295c53d-f839-4667-99bb-ae75514f7f03",
+                        "ipAddress":"172.0.0.1",
+                        "userId":"5e29fd90c5ea0a3ea9f38e42"},
+                        "sessionId":"123456789"
+                },
+                "data":{
+                    "filters":{
+                        "series":[${serialNumbersArray.map(num => `"${num.trim()}"`).join(',')}]
+                    },
+                    "config":{
+                        "PAGO_RAPIDO":{
+                            "amountFastPaymentPEN":150,
+                            "amountFastPaymentUSD":50,
+                            "fastPaymentVisa":false,
+                            "fastPaymentMC":false,
+                            "fastPaymentAmex":false,
+                            "fastPaymentDiners":false
+                        }
+                    }
+                }
+            }'`;
+            document.getElementById('result6').value = resultArray6;
+
+            var resultArray7 = `db.terminals.update({
+                "serie": {
+                "$in": [
+                    ${serialNumbersArray.map(num => `"${num.trim()}"`).join(',')}
+                ]
+            }
+            }, 
+                {\$set:{"status":"removed"}}, 
+                { multi: true, upsert: false}
+            )`;
+            
+            document.getElementById('result7').value = resultArray7;
+        }
+
+        function pasteAndCheck() {
+            navigator.clipboard.readText().then(function(pastedText) {
+                document.getElementById('serialNumbers').value = pastedText;
+                checkSerialNumbers(pastedText);
+            });
+        }
+
+        function copyResultToClipboard(resultId, copyStatusId) {
+            var result = document.getElementById(resultId).value;
+            navigator.clipboard.writeText(result).then(function() {
+                document.getElementById(copyStatusId).textContent = '✔ Copiado';
+            });
+        }
+
+        function refreshData() {
+            document.getElementById('serialNumbers').value = '';
+            document.getElementById('result1').value = '';
+            document.getElementById('result2').value = '';
+            document.getElementById('result3').value = '';
+            document.getElementById('result4').value = '';
+            document.getElementById('result5').value = '';
+            document.getElementById('result6').value = '';
+            document.getElementById('result7').value = '';
+
+            // Elimina los mensajes de copia exitosa
+            for (let i = 1; i <= 7; i++) {
+                document.getElementById(`copyStatus${i}`).textContent = '';
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+    <title>Generador de Consultas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            transition: background-color 0.5s;
+        }
+        h1 {
+            color: #333;
+        }
+        input {
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 15px;
+            margin-bottom: 10px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-bottom: 10px;
+        }
+        .copy-success {
+            color: green;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Actualizar LegacyId</h1>
+    <input type="file" id="fileInput" accept=".xlsx, .xls" onchange="handleFile()">
+    <div id="result"></div>
+    <button onclick="copyToClipboard()">Copy Result</button>
+    <span id="copyStatus" class="copy-success"></span>
+    <button onclick="refreshResults()">Refresh</button>
+
+    <script>
+        function handleFile() {
+            const fileInput = document.getElementById('fileInput');
+            const resultDiv = document.getElementById('result');
+
+            const file = fileInput.files[0];
+            if (!file) {
+                resultDiv.innerText = 'Seleccione un archivo válido.';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+                const rows = XLSX.utils.sheet_to_json(sheet);
+
+                resultDiv.innerHTML = generateQueries(rows);
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        function generateQueries(data) {
+            let queries = '';
+
+            data.forEach((row, index) => {
+                const serie = row.serie;
+                const legacyId = row.id_terminal !== undefined ? row.id_terminal : '';
+
+                const isLastQuery = index === data.length - 1;
+                const commaOrLineBreak = isLastQuery ? '<br>' : ',<br>';
+
+                const query = `db.terminals.updateOne({ "serie": "${serie}" }, { $set: { "legacyId": "${legacyId}" }})${commaOrLineBreak}`;
+                queries += query;
+            });
+
+            return queries;
+        }
+
+        function copyToClipboard() {
+            const resultDiv = document.getElementById('result');
+            const textArea = document.createElement('textarea');
+            textArea.value = resultDiv.innerText;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            document.getElementById('copyStatus').innerText = '✓ Copiado';
+            setTimeout(() => {
+                document.getElementById('copyStatus').innerText = '';
+            }, 2000);
+        }
+
+        function refreshResults() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = ''; // Limpiar resultados
+        }
+    </script>
+</body>
+</html>
